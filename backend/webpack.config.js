@@ -7,7 +7,8 @@ module.exports = {
   },
   target: 'node',
   externals: [
-    nodeExternals() // all dev dependencies
+    // exclude all dev dependencies
+    nodeExternals() 
   ],
   output: {
     libraryTarget: 'commonjs',
@@ -22,14 +23,16 @@ module.exports = {
         query: {
           presets: [
             [
-              'env',
+              // using babel env preset to specifically target the 6.10 environment in AWS Lambda
+              'env',    
               {
                 targets: {
                   node: '6.10'
                 }
               }
             ],
-            'babili'
+            // using babel babili preset to minify code
+            'babili'    
           ]
         }
       }
