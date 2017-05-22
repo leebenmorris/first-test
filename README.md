@@ -195,7 +195,7 @@
 8. Setup s3 buckets
    - Log into the AWS S3 console, and create 2 new buckets. I called mine 'first-xml' and 'first-xml-archived'
    - Setup the 'first-xml' bucket to signal to the Lambda function when objects are added. Click on the bucket, then click on the 'properties' tab, then click on the 'events' box. My setup is below: 
-   ![s3-event](../docs-images/s3-event.png "s3-event-config-box")
+   ![s3-event](./docs-images/s3-event.png "s3-event-config-box")
    - Note the 'ObjectCreate (All)' setting - this will fire the Lambda function for every file added, but only if it matched the 'Suffux' setting (in this case .txt).
 9. I setup a new user that only has access to the AWS Console to list and add files to the 'first-xml' bucket, and list and download files in the 'first-xml-archive' bucket, with the following custom policy, determined by following the instructions [here](http://docs.aws.amazon.com/AmazonS3/latest/dev/example-policies-s3.html)
     ```json
