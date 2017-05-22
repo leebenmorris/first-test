@@ -4,7 +4,10 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "mocha spec"
+    "test": "mocha spec",
+    "lint": "eslint ./lambda-functions ./spec",
+    "posttest": "npm run lint",
+    "precommit": "npm run lint && npm test"
   },
   "devDependencies": {
     "aws-sdk": "^2.54.0",
@@ -14,6 +17,7 @@
     "babili": "^0.0.12",
     "chai": "^3.5.0",
     "eslint": "^3.19.0",
+    "husky": "^0.13.3",
     "mocha": "^3.4.1",
     "serverless-webpack": "^1.0.0-rc.4",
     "webpack": "^2.5.1",
