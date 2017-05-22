@@ -1,0 +1,20 @@
+service: first-test
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: dev
+  region: eu-west-2
+  
+package:
+  individually: true
+
+plugins:
+  - serverless-webpack
+
+custom:
+  webpackIncludeModules: true
+
+functions:
+  process-xml:
+    handler: process-xml.handler
