@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "test": "mocha spec"
+  },
   "devDependencies": {
     "aws-sdk": "^2.54.0",
     "babel-core": "^6.24.1",
     "babel-loader": "^7.0.0",
     "babel-preset-env": "^1.5.0",
     "babili": "^0.0.12",
+    "chai": "^3.5.0",
+    "mocha": "^3.4.1",
     "serverless-webpack": "^1.0.0-rc.4",
     "webpack": "^2.5.1",
     "webpack-node-externals": "^1.6.0"
