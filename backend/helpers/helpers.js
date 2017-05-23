@@ -63,11 +63,34 @@ const copy = (srcBucket, srcKey, dstBucket, dstKey, method = s3) =>
     )
   );
 
+const remove = (srcBucket, srcKey, method = s3) =>
+  new Promise((resolve, reject) =>
+    method.deleteObject(
+      {
+        Bucket: srcBucket,
+        Key: srcKey
+      },
+      (err, res) => err ? reject(err) : resolve(res)
+    )
+  );
+
+const list = (srcBucket, method = s3) => 
+  new Promise((resolve, reject) => 
+    method.listObjects(
+      {
+        Bucket: srcBucket
+      },
+      (err, res) => err ? reject(err) : resolve(res)
+    )
+  );
+
 module.exports = {
   s3EventHandler,
   bufferToJson,
   findValueByKey,
   tidyItems,
   download,
-  copy
+  copy,
+  remove,
+  list
 };
