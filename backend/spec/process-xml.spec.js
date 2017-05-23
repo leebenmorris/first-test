@@ -1,7 +1,9 @@
 const fs = require('fs');
 
 const s3Mock = require('mock-aws-s3');
+const s3 = s3Mock.S3();
 s3Mock.config.basePath = 'spec/mock-s3-buckets';
+
 
 const { expect } = require('chai');
 
@@ -25,7 +27,9 @@ const {
   findValueByKey,
   tidyItems,
   download,
-  copy
+  copy,
+  remove,
+  list
 } = require('../helpers/helpers');
 
 describe('handler', () => {
@@ -161,7 +165,7 @@ describe('download', () => {
   });
 
   it('correctly downloads a file from the given bucket', () => {
-    return download(xmlBucket, testFileName, s3Mock.S3())
+    return download(xmlBucket, testFileName, s3)
       .then(res => {
         const buffer = res.Body;
         expect(res).to.be.a('object');
@@ -184,16 +188,33 @@ describe('copy', () => {
     expect(copy).to.be.a('function');
   });
 
-  it('copies a file from one s3 bucket to another', () => {
-    return copy(xmlBucket, testFileName, archiveBucket, archiveFileName, s3Mock.S3())
-      .then(() => {
-        return download(archiveBucket, archiveFileName, s3Mock.S3())
-          .then(res => {
-            const buffer = res.Body;
-            expect(res).to.be.a('object');
-            expect(res.Key).to.equal(archiveFileName);
-            expect(Buffer.isBuffer(buffer)).to.be.true;
-          });
-      });
+  it('copies a file from one s3 bucket to another', async () => {
+    await copy(xmlBucket, testFileName, archiveBucket, archiveFileName, s3);
+
+    const data = await download(archiveBucket, archiveFileName, s3);
+    const buffer = data.Body;
+    expect(data).to.be.a('object');
+    expect(data.Key).to.equal(archiveFileName);
+    expect(Buffer.isBuffer(buffer)).to.be.true;
+  });
+});
+
+describe('remove', () => {
+  it('is a function', () => {
+    expect(remove).to.be.a('function');
+  });
+
+  it('removes a file from an s3 bucket', async () => {
+    const preList = (await list(archiveBucket, s3)).Contents;
+
+    await remove(archiveBucket, archiveFileName, s3);
+
+    const postList = (await list(archiveBucket, s3)).Contents;
+
+    expect(Array.isArray(preList)).to.be.true;
+    expect(preList.length).to.equal(1);
+
+    expect(preList[0].Key).to.equal(archiveFileName);
+    expect(postList.length).to.equal(0);
   });
 });
