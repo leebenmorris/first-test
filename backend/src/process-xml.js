@@ -16,7 +16,7 @@ const s3EventHandler = event => {
     : false;
 };
 
-// recusrsively searches object and returns value if truthy at given key
+// recursively searches object and returns value if truthy at given key
 const findValueByKey = (obj, keyToFind) => {
   if (obj[keyToFind]) return obj[keyToFind];
 
