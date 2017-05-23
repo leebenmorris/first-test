@@ -1,16 +1,26 @@
 const fs = require('fs');
 
+const s3Mock = require('mock-aws-s3');
+s3Mock.config.basePath = 'spec/mock-s3-buckets';
+
 const { expect } = require('chai');
 
 const { s3Event } = require('./s3-sample-event');
 
 const { handler } = require('../src/process-xml');
 
+const testFileName = 'example-1.xml.txt';
+
+const xmlTestFile = 'spec/mock-s3-buckets/first-xml/' + testFileName;
+
+const xmlBucket = 'first-xml';
+
 const {
   s3EventHandler,
   bufferToJson,
   findValueByKey,
-  tidyItems
+  tidyItems,
+  download
 } = require('../helpers/helpers');
 
 describe('handler', () => {
@@ -27,8 +37,8 @@ describe('s3EventHandler', () => {
   it('returns an object with correct srcKey and srcBucket when given an s3 event', () => {
     const actual = s3EventHandler(s3Event);
     const expected = {
-      srcBucket: 'first-xml',
-      srcKey: 'example-1.xml.txt'
+      srcBucket: xmlBucket,
+      srcKey: testFileName
     };
     expect(actual).to.eql(expected);
   });
@@ -56,7 +66,7 @@ describe('bufferToJson', () => {
   });
 
   it('converts an xml file to JSON', () => {
-    const buffer = fs.readFileSync('spec/example-1.xml.txt');
+    const buffer = fs.readFileSync(xmlTestFile);
     return bufferToJson(buffer)
       .then(json => {
         expect(json).to.be.a('object');
@@ -68,8 +78,8 @@ describe('bufferToJson', () => {
   it('returns error if cannot convert buffer to JSON', () => {
     const buffer = Buffer.from('bananas');
     return bufferToJson(buffer)
-      .then(json => {
-        throw new Error('Promise was unexpectedly fulfilled with:\n' + JSON.stringify(json, null, 2));
+      .then(() => {
+        throw new Error('Promise was unexpectedly fulfilled');
       }, error => {
         expect(error).to.be.an.instanceof(Error);
       });
@@ -82,8 +92,8 @@ describe('findValueByKey', () => {
   });
 
   it('recursively searches for the given key, then returns it\'s value', () => {
-    const buffer = fs.readFileSync('spec/example-1.xml.txt');
-    bufferToJson(buffer)
+    const buffer = fs.readFileSync(xmlTestFile);
+    return bufferToJson(buffer)
       .then(json => {
         let value = findValueByKey(json, 'userNumber');
         expect(value).to.equal('123456');
@@ -94,8 +104,8 @@ describe('findValueByKey', () => {
   });
 
   it('returns false if key not found', () => {
-    const buffer = fs.readFileSync('spec/example-1.xml.txt');
-    bufferToJson(buffer)
+    const buffer = fs.readFileSync(xmlTestFile);
+    return bufferToJson(buffer)
       .then(json => {
         const value = findValueByKey(json, 'banana');
         expect(value).to.be.false;
@@ -109,10 +119,9 @@ describe('tidyItems', () => {
   });
 
   it('tidies up the ReturnedDebitItems array of objects', () => {
-    const fileName = 'example-1.xml.txt';
-    const buffer = fs.readFileSync('spec/' + fileName);
+    const buffer = fs.readFileSync(xmlTestFile);
     const firstTidiedItem = {
-      fromFile: 'example-1.xml.txt',
+      fromFile: testFileName,
       ref: 'X01234-1',
       transCode: '17',
       returnCode: '1012',
@@ -129,14 +138,29 @@ describe('tidyItems', () => {
         branchName: 'A BRANCH'
       }
     };
-    bufferToJson(buffer)
+    return bufferToJson(buffer)
       .then(json => {
         const items = findValueByKey(json, 'ReturnedDebitItem');
-        const tidiedItems = tidyItems(items, fileName);
+        const tidiedItems = tidyItems(items, testFileName);
         expect(tidiedItems).to.be.a('array');
         expect(tidiedItems[0]).to.be.a('object');
         expect(tidiedItems.length).to.be.equal(3);
         expect(tidiedItems[0]).to.eql(firstTidiedItem);
+      });
+  });
+});
+
+describe('download', () => {
+  it('is a function', () => {
+    expect(download).to.be.a('function');
+  });
+
+  it('correctly downloads a file from the given bucket', () => {
+    return download(xmlBucket, testFileName, s3Mock.S3())
+      .then(res => {
+        expect(res).to.be.a('object');
+        expect(res.Key).to.equal(testFileName);
+        expect(Buffer.isBuffer(res.Body)).to.be.true;
       });
   });
 });
