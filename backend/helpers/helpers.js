@@ -1,6 +1,10 @@
 /* globals Promise:true */
 Promise = require('bluebird');
 
+const AWS = require('aws-sdk');
+
+const s3 = new AWS.S3();
+
 const { parseString } = require('xml2js');
 
 const bufferToJson = Promise.promisify(parseString);
@@ -36,9 +40,21 @@ const tidyItems = (items, fileName) =>
     return item.$;
   });
 
+const download = (srcBucket, srcKey, method = s3) =>
+  new Promise((resolve, reject) =>
+    method.getObject(
+      {
+        Bucket: srcBucket,
+        Key: srcKey
+      },
+      (err, res) => err ? reject(err) : resolve(res)
+    )
+  );
+
 module.exports = {
   s3EventHandler,
   bufferToJson,
   findValueByKey,
-  tidyItems
+  tidyItems,
+  download
 };
