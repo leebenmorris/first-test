@@ -1,8 +1,13 @@
+const fs = require('fs');
+
 const { expect } = require('chai');
 
-const { handler, s3EventHandler } = require('../lambda-functions/process-xml');
-
 const { s3Event } = require('./s3-sample-event');
+
+const {
+  handler,
+  s3EventHandler,
+  bufferToJson } = require('../lambda-functions/process-xml');
 
 describe('handler', () => {
   it('is a function', () => {
@@ -38,5 +43,31 @@ describe('s3EventHandler', () => {
 
     actual = s3EventHandler('a');
     expect(actual).to.be.false;
+  });
+});
+
+describe('bufferToJson', () => {
+  it('is a function', () => {
+    expect(bufferToJson).to.be.a('function');
+  });
+
+  it('converts an xml file to JSON', () => {
+    const buffer = fs.readFileSync('spec/example-1.xml.txt');
+    return bufferToJson(buffer)
+      .then(json => {
+        expect(json).to.be.a('object');
+        expect(json.BACSDocument).to.be.a('object');
+      });
+  });
+
+  // from: http://paulsalaets.com/testing-with-promises-in-mocha
+  it('returns error if cannot convert buffer to JSON', () => {
+    const buffer = Buffer.from('bananas');
+    return bufferToJson(buffer)
+      .then(json => {
+        throw new Error('Promise was unexpectedly fulfilled with:\n' + JSON.stringify(json, null, 2));
+      }, error => {
+        expect(error).to.be.an.instanceof(Error);
+      });
   });
 });
