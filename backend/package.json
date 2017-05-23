@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "bluebird": "^3.5.0",
+    "pg-promise": "^5.7.1",
     "xml2js": "^0.4.17"
   }
 }
