@@ -4,11 +4,14 @@ const { expect } = require('chai');
 
 const { s3Event } = require('./s3-sample-event');
 
+const { handler } = require('../src/process-xml');
+
 const {
-  handler,
   s3EventHandler,
   bufferToJson,
-  findValueByKey } = require('../src/process-xml');
+  findValueByKey,
+  tidyItems
+} = require('../helpers/helpers');
 
 describe('handler', () => {
   it('is a function', () => {
@@ -96,6 +99,44 @@ describe('findValueByKey', () => {
       .then(json => {
         const value = findValueByKey(json, 'banana');
         expect(value).to.be.false;
+      });
+  });
+});
+
+describe('tidyItems', () => {
+  it('is a function', () => {
+    expect(tidyItems).to.be.a('function');
+  });
+
+  it('tidies up the ReturnedDebitItems array of objects', () => {
+    const fileName = 'example-1.xml.txt';
+    const buffer = fs.readFileSync('spec/' + fileName);
+    const firstTidiedItem = {
+      fromFile: 'example-1.xml.txt',
+      ref: 'X01234-1',
+      transCode: '17',
+      returnCode: '1012',
+      returnDescription: 'INSTRUCTION CANCELLED',
+      originalProcessingDate: '2017-01-12',
+      valueOf: '65.00',
+      currency: 'GBP',
+      PayerAccount: {
+        number: '12345678',
+        ref: 'X01234',
+        name: 'FRED SMITH',
+        sortCode: '01-02-03',
+        bankName: 'A BANK',
+        branchName: 'A BRANCH'
+      }
+    };
+    bufferToJson(buffer)
+      .then(json => {
+        const items = findValueByKey(json, 'ReturnedDebitItem');
+        const tidiedItems = tidyItems(items, fileName);
+        expect(tidiedItems).to.be.a('array');
+        expect(tidiedItems[0]).to.be.a('object');
+        expect(tidiedItems.length).to.be.equal(3);
+        expect(tidiedItems[0]).to.eql(firstTidiedItem);
       });
   });
 });
