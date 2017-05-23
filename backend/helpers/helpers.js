@@ -9,6 +9,27 @@ const { parseString } = require('xml2js');
 
 const bufferToJson = Promise.promisify(parseString);
 
+const pgp = require('pg-promise')({ promiseLib: Promise });
+
+const dbCredentials = require('../db-config/db-config').local;
+const db = pgp(dbCredentials);
+
+const fullJsonToDb = (srcKey, json) =>
+  db.one(`
+    INSERT INTO full_json (orig_doc_name, doc_json)
+    VALUES ($1, $2)
+    RETURNING id`,
+    [srcKey, json]
+  )
+    .then(res => res.id);
+
+const returnedDebitItemsToDb = (itemRef, item, jsonId) =>
+  db.none(`
+    INSERT INTO returned_debit_items (ref, item_json, doc_id)
+    VALUES ($1, $2, $3)`,
+    [itemRef, item, jsonId]
+  );
+
 // from: https://claudiajs.com/tutorials/designing-testable-lambdas.html
 const s3EventHandler = event => {
   const s3event = event.Records && event.Records[0];
@@ -74,8 +95,8 @@ const remove = (srcBucket, srcKey, method = s3) =>
     )
   );
 
-const list = (srcBucket, method = s3) => 
-  new Promise((resolve, reject) => 
+const list = (srcBucket, method = s3) =>
+  new Promise((resolve, reject) =>
     method.listObjects(
       {
         Bucket: srcBucket
@@ -92,5 +113,7 @@ module.exports = {
   download,
   copy,
   remove,
-  list
+  list,
+  fullJsonToDb,
+  returnedDebitItemsToDb
 };
