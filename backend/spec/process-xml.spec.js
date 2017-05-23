@@ -164,22 +164,21 @@ describe('download', () => {
     expect(download).to.be.a('function');
   });
 
-  it('correctly downloads a file from the given bucket', () => {
-    return download(xmlBucket, testFileName, s3)
-      .then(res => {
-        const buffer = res.Body;
-        expect(res).to.be.a('object');
-        expect(res.Key).to.equal(testFileName);
-        expect(Buffer.isBuffer(buffer)).to.be.true;
-        return bufferToJson(buffer)
-          .then(json => {
-            let value = findValueByKey(json, 'userNumber');
-            expect(value).to.equal('123456');
+  it('correctly downloads a file from the given bucket', async () => {
+    const data = await download(xmlBucket, testFileName, s3);
+    const buffer = data.Body;
 
-            value = findValueByKey(json, 'ReturnedDebitItem');
-            expect(value).to.be.a('array');
-          });
-      });
+    expect(data).to.be.a('object');
+    expect(data.Key).to.equal(testFileName);
+    expect(Buffer.isBuffer(buffer)).to.be.true;
+
+    const json = await bufferToJson(buffer);
+
+    let value = findValueByKey(json, 'userNumber');
+    expect(value).to.equal('123456');
+
+    value = findValueByKey(json, 'ReturnedDebitItem');
+    expect(value).to.be.a('array');
   });
 });
 
