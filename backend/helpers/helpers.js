@@ -51,10 +51,23 @@ const download = (srcBucket, srcKey, method = s3) =>
     )
   );
 
+const copy = (srcBucket, srcKey, dstBucket, dstKey, method = s3) =>
+  new Promise((resolve, reject) =>
+    method.copyObject(
+      {
+        Bucket: dstBucket,
+        Key: dstKey,
+        CopySource: srcBucket + '/' + srcKey
+      },
+      (err, res) => err ? reject(err) : resolve(res)
+    )
+  );
+
 module.exports = {
   s3EventHandler,
   bufferToJson,
   findValueByKey,
   tidyItems,
-  download
+  download,
+  copy
 };
