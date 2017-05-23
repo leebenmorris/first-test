@@ -3,7 +3,7 @@ const path = require('path');
 
 module.exports = {
   entry: {
-    'process-xml': './lambda-functions/process-xml.js',
+    'process-xml': './src/process-xml.js',
   },
   target: 'node',
   externals: [

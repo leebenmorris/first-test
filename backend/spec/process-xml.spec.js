@@ -8,7 +8,7 @@ const {
   handler,
   s3EventHandler,
   bufferToJson,
-  findValueByKey } = require('../lambda-functions/process-xml');
+  findValueByKey } = require('../src/process-xml');
 
 describe('handler', () => {
   it('is a function', () => {
