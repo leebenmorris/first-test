@@ -6,7 +6,6 @@
   "scripts": {
     "test": "mocha spec",
     "lint": "eslint lambda-functions spec",
-    "posttest": "npm run lint",
     "precommit": "npm run lint && npm test"
   },
   "devDependencies": {
