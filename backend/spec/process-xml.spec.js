@@ -15,12 +15,17 @@ const xmlTestFile = 'spec/mock-s3-buckets/first-xml/' + testFileName;
 
 const xmlBucket = 'first-xml';
 
+const archiveBucket = xmlBucket + '-archived';
+
+const archiveFileName = 'archived.' + testFileName;
+
 const {
   s3EventHandler,
   bufferToJson,
   findValueByKey,
   tidyItems,
-  download
+  download,
+  copy
 } = require('../helpers/helpers');
 
 describe('handler', () => {
@@ -169,6 +174,25 @@ describe('download', () => {
 
             value = findValueByKey(json, 'ReturnedDebitItem');
             expect(value).to.be.a('array');
+          });
+      });
+  });
+});
+
+describe('copy', () => {
+  it('is a function', () => {
+    expect(copy).to.be.a('function');
+  });
+
+  it('copies a file from one s3 bucket to another', () => {
+    return copy(xmlBucket, testFileName, archiveBucket, archiveFileName, s3Mock.S3())
+      .then(() => {
+        return download(archiveBucket, archiveFileName, s3Mock.S3())
+          .then(res => {
+            const buffer = res.Body;
+            expect(res).to.be.a('object');
+            expect(res.Key).to.equal(archiveFileName);
+            expect(Buffer.isBuffer(buffer)).to.be.true;
           });
       });
   });
