@@ -1,3 +1,10 @@
+/* globals Promise:true */
+Promise = require('bluebird');
+
+const { parseString } = require('xml2js');
+
+const bufferToJson = Promise.promisify(parseString);
+
 const s3EventHandler = event => {
   const s3event = event.Records && event.Records[0];
   return (s3event && s3event.eventSource === 'aws:s3' && s3event.s3)
@@ -17,5 +24,6 @@ const handler = (event, context) => {
 
 module.exports = {
   handler,
-  s3EventHandler
+  s3EventHandler,
+  bufferToJson
 };
