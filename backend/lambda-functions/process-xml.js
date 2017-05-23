@@ -5,6 +5,7 @@ const { parseString } = require('xml2js');
 
 const bufferToJson = Promise.promisify(parseString);
 
+// from: https://claudiajs.com/tutorials/designing-testable-lambdas.html
 const s3EventHandler = event => {
   const s3event = event.Records && event.Records[0];
   return (s3event && s3event.eventSource === 'aws:s3' && s3event.s3)
@@ -13,6 +14,19 @@ const s3EventHandler = event => {
       srcKey: s3event.s3.object.key
     }
     : false;
+};
+
+// recusrsively searches object and returns value if truthy at given key
+const findValueByKey = (obj, keyToFind) => {
+  if (obj[keyToFind]) return obj[keyToFind];
+
+  for (let key in obj) {
+    if (typeof obj[key] === 'object') {
+      const result = findValueByKey(obj[key], keyToFind);
+      if (result) return result;
+    }
+  }
+  return false;
 };
 
 const handler = (event, context) => {
@@ -25,5 +39,6 @@ const handler = (event, context) => {
 module.exports = {
   handler,
   s3EventHandler,
-  bufferToJson
+  bufferToJson,
+  findValueByKey
 };
