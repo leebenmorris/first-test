@@ -158,9 +158,18 @@ describe('download', () => {
   it('correctly downloads a file from the given bucket', () => {
     return download(xmlBucket, testFileName, s3Mock.S3())
       .then(res => {
+        const buffer = res.Body;
         expect(res).to.be.a('object');
         expect(res.Key).to.equal(testFileName);
-        expect(Buffer.isBuffer(res.Body)).to.be.true;
+        expect(Buffer.isBuffer(buffer)).to.be.true;
+        return bufferToJson(buffer)
+          .then(json => {
+            let value = findValueByKey(json, 'userNumber');
+            expect(value).to.equal('123456');
+
+            value = findValueByKey(json, 'ReturnedDebitItem');
+            expect(value).to.be.a('array');
+          });
       });
   });
 });
