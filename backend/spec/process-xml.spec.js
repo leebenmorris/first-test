@@ -29,7 +29,9 @@ const {
   download,
   copy,
   remove,
-  list
+  list,
+  fullJsonToDb,
+  returnedDebitItemsToDb
 } = require('../helpers/helpers');
 
 describe('handler', () => {
@@ -215,5 +217,37 @@ describe('remove', () => {
 
     expect(preList[0].Key).to.equal(archiveFileName);
     expect(postList.length).to.equal(0);
+  });
+});
+
+describe('fullJsonToDb', () => {
+  it('is a function', () => {
+    expect(fullJsonToDb).to.be.a('function');
+  });
+
+  it('adds a full JSON record to the database and returns it\'s ID', async () => {
+    const buffer = fs.readFileSync(xmlTestFile);
+    const json = await bufferToJson(buffer);
+
+    const id = await fullJsonToDb(testFileName, json);
+    expect(id).to.be.a('number');
+  });
+});
+
+describe('returnedDebitItemsToDb', () => {
+  it('is a function', () => {
+    expect(returnedDebitItemsToDb).to.be.a('function');
+  });
+
+  it('adds each individual debit item to the database', async () => {
+    const buffer = fs.readFileSync(xmlTestFile);
+    const json = await bufferToJson(buffer);
+    const id = await fullJsonToDb(testFileName, json);
+
+    const items = findValueByKey(json, 'ReturnedDebitItem');
+    const tidiedItems = tidyItems(items, testFileName);
+
+    for (let item of tidiedItems)
+      await returnedDebitItemsToDb(item.ref, item, id);
   });
 });
