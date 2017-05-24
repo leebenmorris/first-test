@@ -7,7 +7,7 @@ const s3 = new AWS.S3();
 const { parseString } = require('xml2js');
 
 const pgp = require('pg-promise')({ promiseLib: Promise });
-const dbCredentials = require('../db-config/db-config').local;
+const dbCredentials = require('../db-config/db-config').aws;
 const db = pgp(dbCredentials);
 
 const bufferToJson = Promise.promisify(parseString);
@@ -20,7 +20,8 @@ const fullJsonToDb = (srcKey, json) =>
     RETURNING id`,
     [srcKey, json]
   )
-    .then(res => res.id);
+    .then(res => res.id)
+    .finally(pgp.end);
 
 const returnedDebitItemsToDb = (itemRef, item, jsonId) =>
   db.none(
@@ -29,7 +30,7 @@ const returnedDebitItemsToDb = (itemRef, item, jsonId) =>
     VALUES ($1, $2, $3)`,
     [itemRef, item, jsonId]
   )
-    .then(() => pgp.end());
+    .then(pgp.end);
 
 // from: https://claudiajs.com/tutorials/designing-testable-lambdas.html
 const s3EventHandler = event => {
