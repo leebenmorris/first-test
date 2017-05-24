@@ -5,6 +5,8 @@ provider:
   runtime: nodejs6.10
   stage: dev
   region: eu-west-2
+  environment:
+    ENV: aws
   
 package:
   individually: true
