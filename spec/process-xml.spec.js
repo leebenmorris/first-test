@@ -35,9 +35,7 @@ const {
 
 describe('handler', function () {
   it('is a function', function () {
-    const isFunc = toString.call(handler) === '[object Function]';
-    const isAsyncFunc = toString.call(handler) === '[object AsyncFunction]';
-    expect(isFunc || isAsyncFunc).to.be.true;
+    expect(typeof handler).to.equal('function');
   });
 });
 
