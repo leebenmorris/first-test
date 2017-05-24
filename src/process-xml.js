@@ -18,13 +18,12 @@ exports.handler = async (event, context) => {
     const returnedItems = h.findValueByKey(json, keytoFind);
     if (!returnedItems) throw new Error(`Key '${keytoFind}' not found in JSON converted from '${srcKey}'`);
 
-    const tidyItems = h.tidyItems(returnedItems, srcKey);
+    const tidiedItems = h.tidyItems(returnedItems, srcKey);
 
     const jsonId = await h.fullJsonToDb(srcKey, json);
 
-    console.log('\n', JSON.stringify(tidyItems, null, 2));
-
-    console.log('jsonId: ', jsonId);
+    for (let item of tidiedItems)
+      await h.returnedDebitItemsToDb(item.ref, item, jsonId);
   }
   catch (err) { console.log(err); }
 };
