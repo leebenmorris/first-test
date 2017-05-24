@@ -1,6 +1,6 @@
 const h = require('../helpers/helpers');
 
-const keytoFind = 'ReturnedDebitIte';
+const keytoFind = 'ReturnedDebitItem';
 
 exports.handler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false;
@@ -16,9 +16,11 @@ exports.handler = async (event, context) => {
     const json = await h.bufferToJson(srcBuffer);
 
     const returnedItems = h.findValueByKey(json, keytoFind);
-    if (!returnedItems) throw new Error(`Key '${keytoFind}' not found in JSON file`);
+    if (!returnedItems) throw new Error(`Key '${keytoFind}' not found in JSON converted from '${srcKey}'`);
 
-    console.log('\n', JSON.stringify(returnedItems, null, 2));
+    const tidyItems = h.tidyItems(returnedItems, srcKey);
+
+    console.log('\n', JSON.stringify(tidyItems, null, 2));
   }
   catch (err) { console.log(err); }
 };
