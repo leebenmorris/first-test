@@ -32,6 +32,11 @@ const returnedDebitItemsToDb = (itemRef, item, jsonId) =>
   )
     .then(pgp.end);
 
+const getReturnedDebitItemsFromDb = () => 
+  db.any(`SELECT * FROM returned_debit_items`)
+    .then(res => res)
+    .finally(pgp.end);
+
 // from: https://claudiajs.com/tutorials/designing-testable-lambdas.html
 const s3EventHandler = event => {
   const s3event = event.Records && event.Records[0];
@@ -117,5 +122,6 @@ module.exports = {
   remove,
   list,
   fullJsonToDb,
-  returnedDebitItemsToDb
+  returnedDebitItemsToDb,
+  getReturnedDebitItemsFromDb
 };
