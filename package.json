@@ -4,9 +4,11 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "mocha spec",
+    "test": "ENV='local' mocha spec",
     "lint": "eslint lambda-functions spec",
-    "precommit": "npm run lint && npm test"
+    "precommit": "npm run lint && npm test",
+    "db-init-local": "ENV='local' node db-config/init-db",
+    "db-init-aws": "ENV='aws' node db-config/init-db"
   },
   "devDependencies": {
     "aws-sdk": "^2.54.0",
