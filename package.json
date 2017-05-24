@@ -5,15 +5,20 @@
   "license": "MIT",
   "scripts": {
     "test": "ENV='local' mocha spec",
+    "wt": "npm run build && ENV='local' mocha .webpack/test-bundle",
     "lint": "eslint lambda-functions spec",
     "precommit": "npm run lint && npm test",
     "db-init-local": "ENV='local' node db-config/init-db",
-    "db-init-aws": "ENV='aws' node db-config/init-db"
+    "w-db-init-local": "npm run build && ENV='local' node .webpack/init-db-bundle",
+    "db-init-aws": "ENV='aws' node db-config/init-db",
+    "w-db-init-aws": "npm run build && ENV='aws' node .webpack/init-db-bundle",
+    "build": "webpack --config local.webpack.config"
   },
   "devDependencies": {
     "aws-sdk": "^2.54.0",
     "babel-core": "^6.24.1",
     "babel-loader": "^7.0.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.5.0",
     "babili": "^0.0.12",
     "chai": "^3.5.0",
