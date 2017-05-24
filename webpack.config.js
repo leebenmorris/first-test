@@ -4,6 +4,7 @@ const path = require('path');
 module.exports = {
   entry: {
     'process-xml': './src/process-xml.js',
+    'get-debit-items': './src/get-debit-items.js'
   },
   target: 'node',
   externals: [

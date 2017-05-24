@@ -18,3 +18,10 @@ custom:
 functions:
   process-xml:
     handler: process-xml.handler
+  getDebitItems:
+    handler: get-debit-items.handler
+    events:
+      - http:
+          method: GET
+          path: get-debit-items
+          cors: true
