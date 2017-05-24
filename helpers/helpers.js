@@ -1,5 +1,4 @@
-/* globals Promise:true */
-Promise = require('bluebird');
+const Promise = require('bluebird');
 
 const AWS = require('aws-sdk');
 
@@ -9,7 +8,7 @@ const { parseString } = require('xml2js');
 
 const bufferToJson = Promise.promisify(parseString);
 
-const pgp = require('pg-promise')();
+const pgp = require('pg-promise')({ promiseLib: Promise });
 
 const dbCredentials = require('../db-config/db-config').local;
 const db = pgp(dbCredentials);
