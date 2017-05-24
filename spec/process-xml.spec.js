@@ -35,7 +35,7 @@ const {
 
 describe('handler', function () {
   it('is a function', function () {
-    expect(handler).to.be.a('function');
+    expect(handler).to.be.a('asyncfunction');
   });
 });
 
