@@ -1,8 +1,22 @@
-const { s3EventHandler } = require('../helpers/helpers');
+const h = require('../helpers/helpers');
 
-exports.handler = (event, context) => {
+const AWS = require('aws-sdk');
+
+const s3 = new AWS.S3();
+
+exports.handler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false;
-  const s3Result = s3EventHandler(event);
-  console.log('s3 Event Result:\n', JSON.stringify(s3Result, null, 2));
-  console.log('s3 Event Result Statement: ', s3Result && 's3 event handled');
+  try {
+    console.log('Reading event:\n', JSON.stringify(event, null ,2));
+    const { srcBucket, srcKey } = h.s3EventHandler(event);
+    const dstBucket = srcBucket + '-archived';
+    const dstKey = 'archived.' + srcKey;
+
+    console.log('names:\n', srcBucket, srcKey, dstBucket, dstKey);
+
+    const srcBuffer = (await h.download(srcBucket, srcKey, s3)).Body;
+
+    console.log(srcBuffer);
+  }
+  catch (err) { console.log(err); }
 };
