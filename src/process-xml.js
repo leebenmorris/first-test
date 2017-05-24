@@ -9,8 +9,6 @@ exports.handler = async (event, context) => {
     const dstBucket = srcBucket + '-archived';
     const dstKey = 'archived.' + srcKey;
 
-    console.log('names:\n', srcBucket, srcKey, dstBucket, dstKey);
-
     const srcBuffer = (await h.download(srcBucket, srcKey)).Body;
 
     const json = await h.bufferToJson(srcBuffer);
@@ -26,6 +24,8 @@ exports.handler = async (event, context) => {
       await h.returnedDebitItemsToDb(item.ref, item, jsonId);
 
     await h.copy(srcBucket, srcKey, dstBucket, dstKey);
+
+    await h.remove(srcBucket, srcKey);
   }
   catch (err) { console.log(err); }
 };
