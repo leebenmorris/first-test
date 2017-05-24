@@ -24,6 +24,8 @@ exports.handler = async (event, context) => {
 
     for (let item of tidiedItems)
       await h.returnedDebitItemsToDb(item.ref, item, jsonId);
+
+    await h.copy(srcBucket, srcKey, dstBucket, dstKey);
   }
   catch (err) { console.log(err); }
 };
