@@ -1,7 +1,7 @@
 const bluebird = require('bluebird');
 const pgp = require('pg-promise')({ promiseLib: bluebird });
 
-const dbCredentials = require('./db-config').local;
+const dbCredentials = require('./db-config')[process.env.ENV];
 const db = pgp(dbCredentials);
 
 const initDb = async () => {

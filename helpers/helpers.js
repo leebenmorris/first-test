@@ -7,7 +7,7 @@ const s3 = new AWS.S3();
 const { parseString } = require('xml2js');
 
 const pgp = require('pg-promise')({ promiseLib: Promise });
-const dbCredentials = require('../db-config/db-config').aws;
+const dbCredentials = require('../db-config/db-config')[process.env.ENV];
 const db = pgp(dbCredentials);
 
 const bufferToJson = Promise.promisify(parseString);
@@ -32,8 +32,11 @@ const returnedDebitItemsToDb = (itemRef, item, jsonId) =>
   )
     .then(pgp.end);
 
-const getReturnedDebitItemsFromDb = () => 
-  db.any(`SELECT * FROM returned_debit_items`)
+const getReturnedDebitItemsFromDb = () =>
+  db.any(
+    `SELECT * FROM returned_debit_items
+    ORDER BY id DESC 
+    LIMIT 10`)
     .then(res => res)
     .finally(pgp.end);
 
