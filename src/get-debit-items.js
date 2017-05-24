@@ -1,3 +1,5 @@
+const h = require('../helpers/helpers');
+
 const responseObj = (result, statusCode) => ({
   statusCode: statusCode,
   headers: {
@@ -8,11 +10,11 @@ const responseObj = (result, statusCode) => ({
   body: JSON.stringify(result)
 });
 
-exports.handler = (event, context, cb) => {
+exports.handler = async (event, context, cb) => {
   context.callbackWaitsForEmptyEventLoop = false;
   try {
-    const res = { success: 'End Point Reached' };
-    cb(null, responseObj(res, 200));
+    const items = await h.getReturnedDebitItemsFromDb();
+    cb(null, responseObj(items, 200));
   }
   catch (err) { cb(new Error(err)); }
 };
