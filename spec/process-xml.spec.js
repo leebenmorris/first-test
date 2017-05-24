@@ -35,7 +35,9 @@ const {
 
 describe('handler', function () {
   it('is a function', function () {
-    expect(handler).to.be.a('asyncfunction');
+    const isFunc = toString.call(handler) === '[object Function]';
+    const isAsyncFunc = toString.call(handler) === '[object AsyncFunction]';
+    expect(isFunc || isAsyncFunc).to.be.true;
   });
 });
 
