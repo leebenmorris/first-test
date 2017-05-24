@@ -14,7 +14,11 @@ exports.handler = async (event, context, cb) => {
   context.callbackWaitsForEmptyEventLoop = false;
   try {
     const items = await h.getReturnedDebitItemsFromDb();
-    cb(null, responseObj(items, 200));
+    const res = {
+      Message: 'Returned Debit Items. Only the top 10 results will be shown, with the newest at the top',
+      'Returned Debit Items': items
+    };
+    cb(null, responseObj(res, 200));
   }
   catch (err) { cb(new Error(err)); }
 };
