@@ -20,7 +20,11 @@ exports.handler = async (event, context) => {
 
     const tidyItems = h.tidyItems(returnedItems, srcKey);
 
+    const jsonId = await h.fullJsonToDb(srcKey, json);
+
     console.log('\n', JSON.stringify(tidyItems, null, 2));
+
+    console.log('jsonId: ', jsonId);
   }
   catch (err) { console.log(err); }
 };
