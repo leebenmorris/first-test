@@ -5,22 +5,46 @@ provider:
   runtime: nodejs6.10
   stage: dev
   region: eu-west-2
+
   environment:
     ENV: aws
-  
-package:
-  individually: true
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:PutObject
+        - s3:DeleteObject
+      Resource: "arn:aws:s3:::*"
 
 plugins:
   - serverless-webpack
 
 custom:
   webpackIncludeModules: true
-  webpack: ./aws.webpack.config.js
+  webpack: aws.webpack.config.js
+  
+package:
+  individually: true
+
+resources:
+  Resources:
+    ArchiveBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: first-xml-archived
+        AccessControl: Private
 
 functions:
   process-xml:
     handler: process-xml.handler
+    events:
+      - s3:
+          bucket: first-xml
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .xml.txt
+
   getDebitItems:
     handler: get-debit-items.handler
     events:
