@@ -3,8 +3,8 @@ const path = require('path');
 
 module.exports = {
   entry: {
-    test: './spec/process-xml.spec',
-    'init-db': './db-config/init-db'
+    test: path.join(__dirname, 'spec', 'process-xml.spec.js'),
+    'init-db': path.join(__dirname, 'db-config', 'init-db')
   },
   target: 'node',
   externals: [nodeExternals()],
