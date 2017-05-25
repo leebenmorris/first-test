@@ -99,6 +99,7 @@ unit tested, but just about every function they use has tests.
               "iam:PutRolePolicy",
               "iam:PassRole",
               "iam:AttachRolePolicy",
+              "iam:DeleteRolePolicy",
               "lambda:GetFunction",
               "lambda:ListVersionsByFunction",
               "lambda:CreateFunction",
@@ -115,6 +116,8 @@ unit tested, but just about every function they use has tests.
               "s3:CreateBucket",
               "s3:ListBucket",
               "s3:PutObject",
+              "s3:PutBucketNotification",
+              "s3:DeleteBucket",
               "ec2:DescribeSecurityGroups",
               "ec2:DescribeSubnets",
               "ec2:DescribeVpcs",
@@ -151,100 +154,18 @@ unit tested, but just about every function they use has tests.
       ```
 4. Locally install dev dependencies - I used Yarn, but npm works too!
    - NOTE: asw-sdk is a dev dependency here as it is included in the AWS Lambda runtime and so I do not want it in the zip package being sent up to AWS. dev dependencies have been excluded from the deployment package in the webpack and serverless config files.
-      ```json
-      {
-        "name": "backend",
-        "version": "1.0.0",
-        "main": "index.js",
-        "license": "MIT",
-        "devDependencies": {
-          "aws-sdk": "^2.54.0",
-          "babel-core": "^6.24.1",
-          "babel-loader": "^7.0.0",
-          "babel-preset-env": "^1.5.0",
-          "babili": "^0.0.12",
-          "serverless-webpack": "^1.0.0-rc.4",
-          "webpack": "^2.5.1",
-          "webpack-node-externals": "^1.6.0"
-        }
-      }
-      ```
 
-4. Configure webpack
+4. Configure Webpack and Babel
    - I like and will be writing asynchronous code in async / await style as it is quicker to write and easier to read. Webpack and babel take care of ensuring the code will run on node 6.10, which is the latest version available on AWS Lambda at the time of writing. Ordinarily, this style would require at least node 7.6. You can check your own node version using 
       ```
       node -v 
       ```
-   - webpack.config.js setup: 
-      ```javascript
-      const nodeExternals = require('webpack-node-externals');
-      const path = require('path');
-
-      module.exports = {
-        entry: {
-          'process-xml': './lambda-functions/process-xml.js',
-        },
-        target: 'node',
-        externals: [
-          // exclude all dev dependencies
-          nodeExternals() 
-        ],
-        output: {
-          libraryTarget: 'commonjs',
-          path: path.join(__dirname, '.webpack'),
-          filename: '[name].js'
-        },
-        module: {
-          loaders: [
-            {
-              test: /\.js$/,
-              loader: 'babel-loader',
-              query: {
-                presets: [
-                  [
-                    // using babel env preset to specifically target the 6.10 environment in AWS Lambda
-                    'env',    
-                    {
-                      targets: {
-                        node: '6.10'
-                      }
-                    }
-                  ],
-                  // using babel babili preset to minify code
-                  'babili'    
-                ]
-              }
-            }
-          ]
-        }
-      };
-      ```
-4. Configure serverless.yml file
-    ```
-    service: first-test
-
-    provider:
-      name: aws
-      runtime: nodejs6.10
-      stage: dev
-      region: eu-west-2
+    -  See the aws.webpack.config.js in the project root folder for the current setup.
       
-    package:
-      individually: true
-
-    plugins:
-      - serverless-webpack
-
-    custom:
-      webpackIncludeModules: true
-
-    functions:
-      process-xml:
-        handler: process-xml.handler
-    ```
-
-
-5. Create basic Lambda function that will read the event data when triggered by an s3 event
+4. Configure Serverless
+    - See the serverless.yml file in the root folder for the current setup. This includes all of the setup for creating the s3 buckets and api gateway, the events that these services generate to invoke their respective Lambda functions, and the s3 permissions required by the Lambda functions to do their jobs.
+    
+5. Create basic Lambda function that will read the event data when triggered by an s3 event. This is what I started with. It console.logs the event object to the CloudWatch logs.
     ```javascript
     exports.handler = (event, context) => {
       context.callbackWaitsForEmptyEventLoop = false;
@@ -260,18 +181,13 @@ unit tested, but just about every function they use has tests.
     ├── node_modules
     ├── package.json
     ├── serverless.yml
-    ├── webpack.config.js
+    ├── aws.webpack.config.js
     └── yarn.lock
     ```
 7. Deploy the service to AWS
     ```
     sls deploy
     ```
-8. Setup s3 buckets
-   - Log into the AWS S3 console, and create 2 new buckets. I called mine 'first-xml' and 'first-xml-archived'
-   - Setup the 'first-xml' bucket to signal to the Lambda function when objects are added. Click on the bucket, then click on the 'properties' tab, then click on the 'events' box. My setup is below: 
-   ![s3-event](./docs-images/s3-event.png "s3-event-config-box")
-   - Note the 'ObjectCreate (All)' setting - this will fire the Lambda function for every file added, but only if it matched the 'Suffux' setting (in this case '.xml.txt').
 9. I setup a new user that only has access to the AWS Console to list and add files to the 'first-xml' bucket, and list and download files in the 'first-xml-archive' bucket, with the following custom policy, determined by following the instructions [here](http://docs.aws.amazon.com/AmazonS3/latest/dev/example-policies-s3.html)
     ```json
     {
