@@ -1,6 +1,6 @@
 const h = require('../helpers/helpers');
 
-const keytoFind = 'ReturnedDebitItem';
+const keyToFind = 'ReturnedDebitItem';
 
 exports.handler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false;
@@ -13,15 +13,16 @@ exports.handler = async (event, context) => {
 
     const json = await h.bufferToJson(srcBuffer);
 
-    const returnedItems = h.findValueByKey(json, keytoFind);
-    if (!returnedItems) throw new Error(`Key '${keytoFind}' not found in JSON converted from '${srcKey}'`);
+    const returnedItems = h.findValueByKey(json, keyToFind);
+    if (!returnedItems) throw new Error(`Key '${keyToFind}' not found in JSON converted from '${srcKey}'`);
 
     const tidiedItems = h.tidyItems(returnedItems, srcKey);
 
     const jsonId = await h.fullJsonToDb(srcKey, json);
 
-    for (let item of tidiedItems)
+    for (let item of tidiedItems) {
       await h.returnedDebitItemsToDb(item.ref, item, jsonId);
+    }
 
     await h.copy(srcBucket, srcKey, dstBucket, dstKey);
 

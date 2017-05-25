@@ -16,7 +16,7 @@ exports.handler = async (event, context, cb) => {
     const items = await h.getReturnedDebitItemsFromDb();
     const res = {
       Message: 'Returned Debit Items. Only the top 10 results will be shown, with the newest at the top',
-      'Returned Debit Items': items
+      'returned_debit_items': items
     };
     cb(null, responseObj(res, 200));
   }
