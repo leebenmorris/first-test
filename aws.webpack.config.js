@@ -3,8 +3,8 @@ const path = require('path');
 
 module.exports = {
   entry: {
-    'process-xml': './src/process-xml.js',
-    'get-debit-items': './src/get-debit-items.js'
+    'process-xml': path.join(__dirname, 'src', 'process-xml.js'),
+    'get-debit-items': path.join(__dirname, 'src', 'get-debit-items.js')
   },
   target: 'node',
   externals: [
