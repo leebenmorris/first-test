@@ -1,7 +1,83 @@
-# s3, Serverless, and Lambda setup
+# First Stop Tech Test
 
+Please email me for logon details to allow access to the s3 bucket used for uploading the xml files to.
+
+If your version of node is less than 7.6, then please read the section 'Running the tests' - there is no need to upgrade.
+
+## Overview
+A brief description of what this system does:
+1. xml files with the extension xml.txt are uploaded to a specific s3 bucket (only using the AWS console at present). For each file added a Lambda function is automatically triggered to process the file.
+2. The Lambda function gets a copy of each file from the bucket and performs the following actions:
+    - Converts the xml file to a JSON representation
+    - Recursively searches the JSON object for the key 'ReturnedDebitItem'
+    - Reformats each item in the resulting array of returned debit items to clean up the presentation and add the filename the item came from for easy reference
+    - Stores the full JSON object in a database in JSONB format, which allows the JSON object to be directly queried
+    - Stores each returned debit item in the database in JSONB format along with the unique database id number of the full JSON object it came from. The individual reference number from each item has been broken out into a separate column for easier querying.
+    - copies the original file to an archive bucket and renames it
+    - deletes the original file
+3. Additonally there is an [API endpoint](https://eanzkos0nk.execute-api.eu-west-2.amazonaws.com/dev/get-debit-items) to allow access to the returned debit items from a web browser
+    - This is also powered by a Lambda function and makes use of the AWS API endpoint service
+    - It will display the 10 newest returned debit items in the database with the newest at the top
+3. There is also a local unit testing environment. The Lambda functions themselves have not been 
+unit tested, but just about every function they use has tests. 
+    - The tests make use of an npm package called [mock-aws-s3](https://www.npmjs.com/package/mock-aws-s3) which uses the local file system and replicates the s3 API. This allows actual files to be used in the tests without making calls to the real AWS s3 service.
+    - A local postgreSQL database is used in the tests so that calls to the AWS RDS database are not needed during testing.
+4. The Lambda functions have been manually integregration tested by bulding them up bit-by-bit using the tested helper functions and checking they work as expected, making use of console.logs and errors that show up in the AWS CloudWatch logs. A local database manager app ([pgAdmin 4](https://www.pgadmin.org/)) was used to monitor the AWS RDS (and local) database.
+5. I have used the [Serverless Framework](https://serverless.com/) to build out the majority of the AWS infrastructure. Additionally, I have used the [serverless-webpack](https://www.npmjs.com/package/serverless-webpack) plugin in combination with the babel 'env' preset to specifically target the Node 6.10 runtime available on AWS Lambda. I have also used 'babili' to minify the code. This setup allows me to use async / await (and any other 'new' javascript code I fancy) and have it transpiled and still run on AWS Lambda.
+
+# Running the tests
+1. The following instructions are for a Mac - if you are running Windows or Linux then links to further resources are provided.
+1. You will need node and npm installed to run these tests and run the scripts in the package.json file. Check to see if you have them installed by running:
+    ```
+    node -v
+    npm -v
+    ```
+    If these are not installed, check to see if you have [Homebrew](https://brew.sh/) (a package manager for OSX) installed using this command
+    ```
+    brew -v
+    ```
+    If this is not available, it can be installed using
+    ```
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    ```
+    Once you have Homebrew, node and npm can be installed with one command
+    ```
+    brew update && brew doctor && brew install node
+    ```
+    If you are not on a Mac, then follow the instructions [here](https://nodejs.org/en/download/current/)
+1. Clone the repository to a local folder. For this you will need git installed. Follow the instructions [here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+2. Install the dependencies. I used Yarn, but npm works too! Yarn can be installed by running the following command
+    ```
+    brew update && brew doctor && brew install yarn
+    ```
+3. The tests need a local install of the postgreSQL database server. For the Mac, I used the [Postgres.app](http://postgresapp.com/). This automatically installs the psql command line tools and starts a server when it is running. For other platforms, instructions are available [here](https://www.postgresql.org/download/). Once psql has been installed, run the following command to setup the database
+      ```
+      createdb first_stop
+      ```
+      Once this is done, from the project folder command line run the following command to setup the database tables ready to receive the data from the tests.  
+      ```
+      npm run db-init-local
+      ```
+      If this fails to run, you may not have a recent enough version of node installed. Some of the code is written in es7 async/await style, which requires at least node 7.6 to run. If your version is older than this and you do not want to update node, then simply run instead
+      ```
+      npm run w-db-init-local
+      ```
+      This command will use webpack and babel to compile the code down to the version of node you are currently running (automatically detected - no input required from you!), then setup the database tables.
+4. To monitor activity on the database (local or AWS), I used [pgAdmin 4](https://www.pgadmin.org/), a free gui for interacting with PostgreSQL databases, but this is not required to run the tests.
+3. Once everything is installed, cd into the project folder and from the command line run
+    - node >= 7.6
+    ```
+    npm t
+    ```
+    - node < 7.6 (uses webpack and babel again)
+    ```
+    npm run wt
+    ```
+    Hopefully all the tests will pass!
+## s3, Serverless, and Lambda setup
+### NOTE: The following only details the initial setup and does not necessarily show the final code.
 1. Create a free AWS account if you do not already have one at  <https://aws.amazon.com/free/>
-2. Create a user with the permissions required to setup and run the serverless framework by following the instructions [here](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)
+2. Create a new user with the permissions required to setup and run the serverless framework by following the instructions [here](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html). If you already have an AWS account with admin privileges then you can skip this step.
    - I called my user 'serverless', only allowed programmatic access, and attached a custom policy with the following permissions. (Taken from [here](https://gist.github.com/WarlaxZ/b2d8299c7545d43a561c68530a3a7381))
       ```json
       {
@@ -60,22 +136,21 @@
       }
       ```
     - Copy down the new users credentials (access key and secret), which can be viewed via the AWS IAM console.
-3. Install the Serverless framework globally
-   - see <https://serverless.com/>
+3. Install the Serverless framework globally - see [here](https://serverless.com/framework/docs/providers/aws/guide/quick-start/)
       ```
       npm install -g serverless
       ```
-4. Using the user credentials obtained above, setup a local config file
+4. Using the user credentials obtained above, [setup a local config file](https://serverless.com/framework/docs/providers/aws/guide/credentials/)
       ```
       serverless config credentials --provider aws --key USER-KEY --secret USER-SECRET
       ```
-3. Setup a fresh Serverless project in a new project folder
+3. Set up a fresh Serverless project in a new project folder
    - From within project folder run (sls is shorthand for serverless, -t is short for template)
       ```
       sls create -t aws-nodejs
       ```
 4. Locally install dev dependencies - I used Yarn, but npm works too!
-   - NOTE: asw-sdk is a dev dependency here as it is included in the AWS Lambda runtime and so I do not want it in the zip package being sent up to AWS
+   - NOTE: asw-sdk is a dev dependency here as it is included in the AWS Lambda runtime and so I do not want it in the zip package being sent up to AWS. dev dependencies have been excluded from the deployment package in the webpack and serverless config files.
       ```json
       {
         "name": "backend",
